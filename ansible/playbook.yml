@@ -1,0 +1,103 @@
+---
+# =============================================================================
+# Deploy Claude Code customizations to every instance (Mac + Rocky Linux).
+#
+# What it installs into ~/.claude/ on each host:
+#   - CLAUDE.md            personal user memory
+#   - rules/*.md           modular (and path-scoped) rules
+#   - settings.json        merged in non-destructively (see group_vars/all.yml)
+#
+# Safety:
+#   - Every file is backed up before being changed (*.NNNN.YYYY-... siblings).
+#   - settings.json is read, deep-merged, and rewritten — existing keys and
+#     permission entries are preserved, not overwritten.
+#
+# Run:
+#   ansible-playbook playbook.yml                 # all hosts
+#   ansible-playbook playbook.yml --limit mac-local
+#   ansible-playbook playbook.yml --check --diff  # dry run, show changes
+# =============================================================================
+
+- name: Install Claude Code settings & customizations
+  hosts: claude_instances
+  gather_facts: true
+
+  vars:
+    claude_dir: "{{ ansible_user_dir }}/.claude"
+    claude_rules_dir: "{{ claude_dir }}/rules"
+
+  tasks:
+    - name: Ensure ~/.claude exists
+      ansible.builtin.file:
+        path: "{{ claude_dir }}"
+        state: directory
+        mode: "0755"
+
+    - name: Ensure ~/.claude/rules exists
+      ansible.builtin.file:
+        path: "{{ claude_rules_dir }}"
+        state: directory
+        mode: "0755"
+
+    - name: Deploy personal CLAUDE.md (user memory)
+      ansible.builtin.copy:
+        src: CLAUDE.md
+        dest: "{{ claude_dir }}/CLAUDE.md"
+        mode: "0644"
+        backup: true
+
+    - name: Deploy modular rules
+      ansible.builtin.copy:
+        src: rules/
+        dest: "{{ claude_rules_dir }}/"
+        mode: "0644"
+        backup: true
+
+    # --- settings.json: non-destructive merge -------------------------------
+
+    - name: Check for an existing settings.json
+      ansible.builtin.stat:
+        path: "{{ claude_dir }}/settings.json"
+      register: settings_stat
+
+    - name: Read existing settings.json
+      ansible.builtin.slurp:
+        src: "{{ claude_dir }}/settings.json"
+      register: settings_slurp
+      when: settings_stat.stat.exists
+
+    - name: Parse existing settings (empty object if none)
+      ansible.builtin.set_fact:
+        existing_settings: >-
+          {{ (settings_slurp.content | b64decode | from_json)
+             if settings_stat.stat.exists else {} }}
+
+    - name: Union permission lists (preserve what's already allowed/asked/denied)
+      ansible.builtin.set_fact:
+        merged_permissions:
+          allow: "{{ (existing_settings.permissions.allow | default([]))
+                     | union(managed_settings.permissions.allow | default([])) }}"
+          ask: "{{ (existing_settings.permissions.ask | default([]))
+                   | union(managed_settings.permissions.ask | default([])) }}"
+          deny: "{{ (existing_settings.permissions.deny | default([]))
+                    | union(managed_settings.permissions.deny | default([])) }}"
+
+    - name: Compute merged settings
+      ansible.builtin.set_fact:
+        final_settings: >-
+          {{ existing_settings
+             | combine(managed_settings, recursive=True)
+             | combine({'permissions': merged_permissions}) }}
+
+    - name: Write merged settings.json
+      ansible.builtin.copy:
+        content: "{{ final_settings | to_nice_json(indent=2) }}\n"
+        dest: "{{ claude_dir }}/settings.json"
+        mode: "0644"
+        backup: true
+
+    - name: Summary
+      ansible.builtin.debug:
+        msg: >-
+          Claude Code config deployed to {{ claude_dir }}
+          (settings.json {{ 'merged into existing' if settings_stat.stat.exists else 'created fresh' }}).

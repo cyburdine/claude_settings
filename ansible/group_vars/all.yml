@@ -1,0 +1,51 @@
+---
+# =============================================================================
+# Managed Claude Code user-scope settings (~/.claude/settings.json)
+# -----------------------------------------------------------------------------
+# These keys are MERGED into any existing settings.json on each host:
+#   * top-level keys are combined recursively (your other keys are preserved)
+#   * permission lists (allow / ask / deny) are UNIONED, not replaced
+#   * the previous file is backed up before every write
+#
+# Edit this block to change what gets deployed everywhere. It mirrors the
+# "starter settings.json" from your notes, minus the toolchain-specific
+# examples (npm allowlist, the prettier hook, the npmjs.org sandbox domain).
+# Everything left here is toolchain-agnostic and safe on both macOS and Rocky.
+# =============================================================================
+
+managed_settings:
+  "$schema": "https://json.schemastore.org/claude-code-settings.json"
+
+  permissions:
+    allow:
+      - "Bash(git diff *)"
+      - "Bash(git status)"
+    ask:
+      - "Bash(git push *)"
+    deny:
+      - "Bash(curl *)"
+      - "Bash(rm -rf *)"
+      - "Read(./.env)"
+      - "Read(./.env.*)"
+      - "Read(./secrets/**)"
+      - "Read(./config/credentials.json)"
+
+  sandbox:
+    enabled: true
+    autoAllowBashIfSandboxed: true
+    excludedCommands:
+      - "docker *"
+    filesystem:
+      denyRead:
+        - "~/.aws/credentials"
+    network:
+      allowedDomains:
+        - "github.com"
+
+  effortLevel: "high"
+  autoUpdatesChannel: "stable"
+  tui: "fullscreen"
+
+  attribution:
+    commit: ""
+    pr: ""

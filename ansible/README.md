@@ -9,13 +9,20 @@ your Rocky Linux servers — by writing into `~/.claude/` on each host.
 | --- | --- | --- |
 | `CLAUDE.md` | `files/CLAUDE.md` | Personal user memory, read in every session. |
 | `rules/*.md` | `files/rules/` | Modular + path-scoped rules. |
+| `statusline.py` | `../statusline.py` (repo root) | Installed `0755`; needs `python3` on the host. |
 | `settings.json` | `group_vars/all.yml` (`managed_settings`) | **Merged** into any existing file. |
 
 `settings.json` covers the toolchain-agnostic items from your notes: the
 `$schema` line, permission allow/ask/deny lists, sensitive-file read denies,
-bash sandboxing, `effortLevel`, `autoUpdatesChannel`, `tui`, and the empty
-`attribution` block (drops the co-author byline). The npm/prettier examples
-from the notes are intentionally left out.
+bash sandboxing, `effortLevel`, `autoUpdatesChannel`, `tui`, the `statusLine`
+block pointing at the deployed `statusline.py`, and the empty `attribution`
+block (drops the co-author byline). The npm/prettier examples from the notes
+are intentionally left out.
+
+The status line is deployed from the repo root, so `statusline.py` lives in one
+place rather than being duplicated under `files/`. The playbook also checks each
+host for `python3` and prints a warning (rather than failing) if it's missing —
+the file is still installed, it just won't render until `python3` is on PATH.
 
 ## Setup
 

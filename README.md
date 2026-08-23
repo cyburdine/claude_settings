@@ -107,12 +107,15 @@ of customizations to **every instance at once** — into `~/.claude/` on each ho
 | --- | --- | --- |
 | `CLAUDE.md` | `ansible/files/CLAUDE.md` | Personal user memory, read every session. |
 | `rules/*.md` | `ansible/files/rules/` | Modular + path-scoped rules. |
+| `statusline.py` | `statusline.py` (repo root) | Installed `0755`; playbook warns if the host has no `python3`. |
 | `settings.json` | `ansible/group_vars/all.yml` (`managed_settings`) | **Merged**, not overwritten. |
 
 `settings.json` covers the toolchain-agnostic pieces: the `$schema` line,
 permission allow/ask/deny lists, sensitive-file read denies, bash sandboxing,
-`effortLevel`, `autoUpdatesChannel`, `tui`, and an empty `attribution` block
-(drops the co-author byline).
+`effortLevel`, `autoUpdatesChannel`, `tui`, the `statusLine` block, and an
+empty `attribution` block (drops the co-author byline). Deploying with Ansible
+means you can skip the manual install above entirely — the playbook drops in
+`statusline.py` and wires up `statusLine` on every host.
 
 ### How to use it
 

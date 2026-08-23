@@ -42,6 +42,12 @@ managed_settings:
       allowedDomains:
         - "github.com"
 
+  statusLine:
+    type: "command"
+    command: "~/.claude/statusline.py"
+    padding: 0
+    refreshInterval: 60
+
   effortLevel: "high"
   autoUpdatesChannel: "stable"
   tui: "fullscreen"

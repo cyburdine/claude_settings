@@ -5,6 +5,7 @@
 # What it installs into ~/.claude/ on each host:
 #   - CLAUDE.md            personal user memory
 #   - rules/*.md           modular (and path-scoped) rules
+#   - statusline.py        two-row status line (needs python3 on the host)
 #   - settings.json        merged in non-destructively (see group_vars/all.yml)
 #
 # Safety:
@@ -53,6 +54,29 @@
         mode: "0644"
         backup: true
 
+    # --- status line ---------------------------------------------------------
+
+    - name: Deploy statusline.py
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/../statusline.py"
+        dest: "{{ claude_dir }}/statusline.py"
+        mode: "0755"
+        backup: true
+
+    - name: Check that the host has python3 (the status line needs it)
+      ansible.builtin.command: python3 --version
+      register: statusline_python
+      changed_when: false
+      failed_when: false
+      check_mode: false   # must still run under --check so the warning is accurate
+
+    - name: Warn if python3 is missing
+      ansible.builtin.debug:
+        msg: >-
+          python3 was not found on this host — statusline.py was installed but
+          will not render until python3 is available on PATH.
+      when: statusline_python.rc != 0
+
     # --- settings.json: non-destructive merge -------------------------------
 
     - name: Check for an existing settings.json
@@ -100,4 +124,5 @@
       ansible.builtin.debug:
         msg: >-
           Claude Code config deployed to {{ claude_dir }}
-          (settings.json {{ 'merged into existing' if settings_stat.stat.exists else 'created fresh' }}).
+          (settings.json {{ 'merged into existing' if settings_stat.stat.exists else 'created fresh' }};
+          status line {{ 'active' if statusline_python.rc == 0 else 'installed but python3 is MISSING' }}).

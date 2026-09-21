@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Two-row Claude Code status line. No jq, no bash — pure Python 3 stdlib.
 
-Row 1: folder (cyan) · model (white) · tokens (blue) · thinking (green/grey) · effort (by level)
+Row 1: user (orange) · folder (cyan) · model (white) · tokens (blue) · thinking (green/grey) · effort (by level)
 Row 2: ctx meter (per-dot gradient) · 5h meter (risk color) · 7d meter (risk color)
 """
 
@@ -9,6 +9,7 @@ import sys
 import json
 import time
 import math
+import getpass
 
 
 def c256(code):
@@ -16,6 +17,7 @@ def c256(code):
 
 
 RESET = "\033[0m"
+USER_C = c256(214)   # orange
 CYAN = c256(51)
 GREEN = c256(49)
 YELLOW = c256(226)
@@ -217,7 +219,12 @@ def main():
         # ---- Row 1 ----
         cur_dir = safe_get(data, "workspace", "current_dir", default="") or ""
         folder = cur_dir.rstrip("/").split("/")[-1] if cur_dir else "?"
-        row1_parts = [f"{CYAN}{folder}{RESET}"]
+        try:
+            user = getpass.getuser()
+        except Exception:
+            user = ""
+        row1_parts = [f"{USER_C}{user}{RESET}"] if user else []
+        row1_parts.append(f"{CYAN}{folder}{RESET}")
 
         model_name = safe_get(data, "model", "display_name")
         if model_name:

@@ -5,7 +5,7 @@ whole `~/.claude/` setup to every machine I run Claude Code on.
 
 ![Claude Code status line](docs/statusline.png)
 
-**Row 1** — folder · model · tokens used / context window · thinking on/off · effort level
+**Row 1** — username · folder · model · tokens used / context window · thinking on/off · effort level
 **Row 2** — `ctx` context meter · `5h` and `7d` rate-limit meters, each with its reset countdown
 
 Two things make the meters more useful than a plain percentage:
@@ -85,7 +85,11 @@ All near the top of `statusline.py`:
 | `BAR_WIDTH` | Dots per meter (default 10). |
 | `CTX_GRADIENT` | Per-dot green→red gradient for the `ctx` bar. |
 | `FILLED_CH` / `EMPTY_CH` | Meter glyphs, if your font hates `●`/`○`. |
-| `EFFORT_C`, `MODEL_C`, `TOKENS_C` | Per-field 256-color codes for row 1. |
+| `USER_C`, `EFFORT_C`, `MODEL_C`, `TOKENS_C` | Per-field 256-color codes for row 1. |
+
+Want to rebuild it from a description instead of the code? The full spec is in
+[`docs/statusline-prompt.md`](docs/statusline-prompt.md). You can paste it into
+Claude Code as-is.
 
 > `statusline.sh` is the older single-row bash version, kept around for anyone
 > who'd rather not have Python in the loop. It has no rate-limit meters.
